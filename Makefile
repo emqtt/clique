@@ -1,27 +1,26 @@
-DIALYZER_APPS = kernel stdlib sasl erts ssl tools os_mon runtime_tools crypto inets \
-	public_key mnesia syntax_tools compiler
-PULSE_TESTS = worker_pool_pulse
+## shallow clone for speed
 
-.PHONY: deps test
+REBAR_GIT_CLONE_OPTIONS += --depth 1
+export REBAR_GIT_CLONE_OPTIONS
 
-all: deps compile
+REBAR = rebar3
+all: compile
 
-compile: deps
-	./rebar compile
+compile:
+	$(REBAR) compile
 
-deps:
-	./rebar get-deps
+ct: compile
+	$(REBAR) as test ct -v
 
-clean:
-	./rebar clean
+eunit: compile
+	$(REBAR) as test eunit
 
-distclean: clean
-	./rebar delete-deps
+xref:
+	$(REBAR) xref
 
-# You should 'clean' before your first run of this target
-# so that deps get built with PULSE where needed.
-pulse:
-	./rebar compile -D PULSE
-	./rebar eunit -D PULSE skip_deps=true suite=$(PULSE_TESTS)
+clean: distclean
 
-include tools.mk
+distclean:
+	@rm -rf _build
+	@rm -f data/app.*.config data/vm.*.args rebar.lock
+
